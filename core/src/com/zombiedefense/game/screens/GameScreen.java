@@ -1,12 +1,14 @@
 package com.zombiedefense.game.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.zombiedefense.game.ZombieDefense;
+
 
 public class GameScreen implements Screen {
 
@@ -20,7 +22,7 @@ public class GameScreen implements Screen {
     OrthographicCamera cam;
 
     World world;
-
+    Body body;
     Box2DDebugRenderer debugRenderer;
 
     public GameScreen(ZombieDefense zd) {
@@ -30,13 +32,13 @@ public class GameScreen implements Screen {
         cam.setToOrtho(false, WORLD_WIDTH * ASPECT_RATIO, WORLD_HEIGHT);
 
         debugRenderer = new Box2DDebugRenderer();
-        world = new World(new Vector2(0, -10.0f), true);
+        world = new World(new Vector2(0, -30.0f), true);
 
         BodyDef bodyDef = new BodyDef();
         bodyDef.position.set(new Vector2(50 * ASPECT_RATIO, 50));
         bodyDef.type = BodyDef.BodyType.DynamicBody;
 
-        Body body = world.createBody(bodyDef);
+        body = world.createBody(bodyDef);
 
         CircleShape circleShape = new CircleShape();
         circleShape.setRadius(2f);
@@ -44,10 +46,36 @@ public class GameScreen implements Screen {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = circleShape;
         fixtureDef.density = 1;
-        fixtureDef.friction = 0.1f;
+        fixtureDef.friction = 0.8f;
 
-        Fixture fixture = body.createFixture(fixtureDef);
+        body.createFixture(fixtureDef);
         circleShape.dispose();
+
+        BodyDef fBodyDef = new BodyDef();
+        fBodyDef.position.set(new Vector2(50 * ASPECT_RATIO, 10));
+        fBodyDef.type = BodyDef.BodyType.KinematicBody;
+
+        Body fBody = world.createBody(fBodyDef);
+
+        FixtureDef fFixtureDef = new FixtureDef();
+        fFixtureDef.density = 1;
+        fFixtureDef.friction = 1f;
+
+        PolygonShape polygonShape = new PolygonShape();
+
+        polygonShape.setAsBox(100 * ASPECT_RATIO, 5);
+        fFixtureDef.shape = polygonShape;
+        fBody.createFixture(fFixtureDef);
+
+        polygonShape.setAsBox(1 * ASPECT_RATIO, 8000, new Vector2(-50f * ASPECT_RATIO, 0f), 0f);
+        fFixtureDef.shape = polygonShape;
+        fBody.createFixture(fFixtureDef);
+
+        polygonShape.setAsBox(1 * ASPECT_RATIO, 8000, new Vector2(50f * ASPECT_RATIO, 0f), 0f);
+        fFixtureDef.shape = polygonShape;
+        fBody.createFixture(fFixtureDef);
+
+        polygonShape.dispose();
     }
 
     @Override
@@ -70,6 +98,30 @@ public class GameScreen implements Screen {
         game.batch.end();
 
         world.step(1/60f, 6, 2);
+
+        if(Gdx.input.isTouched()) {
+            if(Gdx.input.getX() >= Gdx.graphics.getWidth() / 2) {
+                body.applyTorque(-100f, true);
+            }
+            if(Gdx.input.getX() < Gdx.graphics.getWidth() / 2) {
+                body.applyTorque(100f, true);
+            }
+            if(Gdx.input.getY() < (float) Gdx.graphics.getHeight() / 2) {
+                body.applyLinearImpulse(new Vector2(0f, 10f), body.getWorldCenter(), true);
+            }
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            body.applyTorque(-100f, true);
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            body.applyTorque(100f, true);
+        }
+
+        if(Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            body.applyLinearImpulse(new Vector2(0f, 10f), body.getWorldCenter(), true);
+        }
     }
 
     @Override
