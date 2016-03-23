@@ -6,7 +6,10 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
+import com.sun.net.httpserver.*;
+import com.sun.net.httpserver.Filter;
 import com.zombiedefense.game.ZombieDefense;
 
 
@@ -32,7 +35,7 @@ public class GameScreen implements Screen {
         cam.setToOrtho(false, WORLD_WIDTH * ASPECT_RATIO, WORLD_HEIGHT);
 
         debugRenderer = new Box2DDebugRenderer();
-        world = new World(new Vector2(0, -30.0f), true);
+        world = new World(new Vector2(0, -80f), true);
 
         BodyDef bodyDef = new BodyDef();
         bodyDef.position.set(new Vector2(50 * ASPECT_RATIO, 50));
@@ -46,7 +49,9 @@ public class GameScreen implements Screen {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = circleShape;
         fixtureDef.density = 1;
-        fixtureDef.friction = 0.8f;
+        fixtureDef.restitution = 0.4f;
+        fixtureDef.friction = 1f;
+        body.setLinearDamping(1f);
 
         body.createFixture(fixtureDef);
         circleShape.dispose();
@@ -71,7 +76,11 @@ public class GameScreen implements Screen {
         fFixtureDef.shape = polygonShape;
         fBody.createFixture(fFixtureDef);
 
-        polygonShape.setAsBox(1 * ASPECT_RATIO, 8000, new Vector2(50f * ASPECT_RATIO, 0f), 0f);
+        polygonShape.setAsBox(1 * ASPECT_RATIO, 8000, new Vector2(200f * ASPECT_RATIO, 0f), 0f);
+        fFixtureDef.shape = polygonShape;
+        fBody.createFixture(fFixtureDef);
+
+        polygonShape.setAsBox(1 * ASPECT_RATIO, 8000, new Vector2(80f * ASPECT_RATIO, 0f), -45f);
         fFixtureDef.shape = polygonShape;
         fBody.createFixture(fFixtureDef);
 
@@ -85,8 +94,13 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0.2f, 1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        float lerp = 0.99f;
+        Vector3 position = cam.position;
+        position.x += (body.getPosition().x - position.x) * lerp * delta;
+        position.y += (body.getPosition().y - position.y) * lerp * delta;
 
         cam.update();
 
@@ -101,26 +115,26 @@ public class GameScreen implements Screen {
 
         if(Gdx.input.isTouched()) {
             if(Gdx.input.getX() >= Gdx.graphics.getWidth() / 2) {
-                body.applyTorque(-100f, true);
+                body.applyLinearImpulse(new Vector2(15f, 0f), body.getWorldCenter(), true);
             }
             if(Gdx.input.getX() < Gdx.graphics.getWidth() / 2) {
-                body.applyTorque(100f, true);
+                body.applyLinearImpulse(new Vector2(-15f, 0f), body.getWorldCenter(), true);
             }
             if(Gdx.input.getY() < (float) Gdx.graphics.getHeight() / 2) {
-                body.applyLinearImpulse(new Vector2(0f, 10f), body.getWorldCenter(), true);
+                body.applyLinearImpulse(new Vector2(0f, 32f), body.getWorldCenter(), true);
             }
         }
 
         if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            body.applyTorque(-100f, true);
+            body.applyLinearImpulse(new Vector2(15f, 0f), body.getWorldCenter(), true);
         }
 
         if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            body.applyTorque(100f, true);
+            body.applyLinearImpulse(new Vector2(-15f, 0f), body.getWorldCenter(), true);
         }
 
         if(Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            body.applyLinearImpulse(new Vector2(0f, 10f), body.getWorldCenter(), true);
+            body.applyLinearImpulse(new Vector2(0f, 32f), body.getWorldCenter(), true);
         }
     }
 
