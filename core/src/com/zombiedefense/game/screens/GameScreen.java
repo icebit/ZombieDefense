@@ -8,9 +8,9 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
-import com.sun.net.httpserver.*;
-import com.sun.net.httpserver.Filter;
+
 import com.zombiedefense.game.ZombieDefense;
+import com.zombiedefense.game.characters.Character;
 
 
 public class GameScreen implements Screen {
@@ -24,8 +24,9 @@ public class GameScreen implements Screen {
 
     OrthographicCamera cam;
 
+    Character player;
+
     World world;
-    Body body;
     Box2DDebugRenderer debugRenderer;
 
     public GameScreen(ZombieDefense zd) {
@@ -37,24 +38,7 @@ public class GameScreen implements Screen {
         debugRenderer = new Box2DDebugRenderer();
         world = new World(new Vector2(0, -80f), true);
 
-        BodyDef bodyDef = new BodyDef();
-        bodyDef.position.set(new Vector2(50 * ASPECT_RATIO, 50));
-        bodyDef.type = BodyDef.BodyType.DynamicBody;
-
-        body = world.createBody(bodyDef);
-
-        CircleShape circleShape = new CircleShape();
-        circleShape.setRadius(2f);
-
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = circleShape;
-        fixtureDef.density = 1;
-        fixtureDef.restitution = 0.4f;
-        fixtureDef.friction = 1f;
-        body.setLinearDamping(1f);
-
-        body.createFixture(fixtureDef);
-        circleShape.dispose();
+        player = new Character(world);
 
         BodyDef fBodyDef = new BodyDef();
         fBodyDef.position.set(new Vector2(50 * ASPECT_RATIO, 10));
@@ -97,10 +81,10 @@ public class GameScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        float lerp = 0.99f;
+        float lerp = 0.999f;
         Vector3 position = cam.position;
-        position.x += (body.getPosition().x - position.x) * lerp * delta;
-        position.y += (body.getPosition().y - position.y) * lerp * delta;
+        position.x += (player.body.getPosition().x - position.x) * lerp * delta;
+        position.y += (player.body.getPosition().y - position.y) * lerp * delta;
 
         cam.update();
 
@@ -111,31 +95,9 @@ public class GameScreen implements Screen {
 
         game.batch.end();
 
+        player.render();
         world.step(1/60f, 6, 2);
 
-        if(Gdx.input.isTouched()) {
-            if(Gdx.input.getX() >= Gdx.graphics.getWidth() / 2) {
-                body.applyLinearImpulse(new Vector2(15f, 0f), body.getWorldCenter(), true);
-            }
-            if(Gdx.input.getX() < Gdx.graphics.getWidth() / 2) {
-                body.applyLinearImpulse(new Vector2(-15f, 0f), body.getWorldCenter(), true);
-            }
-            if(Gdx.input.getY() < (float) Gdx.graphics.getHeight() / 2) {
-                body.applyLinearImpulse(new Vector2(0f, 32f), body.getWorldCenter(), true);
-            }
-        }
-
-        if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            body.applyLinearImpulse(new Vector2(15f, 0f), body.getWorldCenter(), true);
-        }
-
-        if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            body.applyLinearImpulse(new Vector2(-15f, 0f), body.getWorldCenter(), true);
-        }
-
-        if(Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            body.applyLinearImpulse(new Vector2(0f, 32f), body.getWorldCenter(), true);
-        }
     }
 
     @Override
